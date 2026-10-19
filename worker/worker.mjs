@@ -56,7 +56,10 @@ export default {
         })
       });
       if (saved.status === 409) return reply({error: '保存期间状态已被修改，请刷新后重新调整'}, 409);
-      if (!saved.ok) return reply({error: `写入 GitHub 状态失败（${saved.status}）`}, 502);
+      if (!saved.ok) {
+        const error = await saved.json();
+        return reply({error: `写入 GitHub 状态失败（${saved.status}）：${error.message}`}, 502);
+      }
       return reply({saved: true});
     } catch {
       return reply({error: '连接 GitHub 失败，请稍后重试'}, 502);
