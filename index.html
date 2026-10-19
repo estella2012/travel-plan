@@ -29,10 +29,10 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline
 
 .save-button:disabled{opacity:.65;cursor:wait}
 .save-feedback{position:fixed;right:18px;bottom:calc(80px + env(safe-area-inset-bottom));max-width:min(360px,calc(100vw - 36px));padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:white;box-shadow:var(--shadow);font-size:14px}
-.event-actions{float:right;display:flex;gap:6px;margin:0 0 8px 12px}.event-edit,.event-delete{min-height:36px;padding:4px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--blue);cursor:pointer;font-size:14px}
+.event-body{--action-size:38px;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) var(--action-size);gap:10px;align-items:start}.event-actions{display:flex;flex-direction:column;gap:8px}.event-edit,.event-delete{display:grid;place-items:center;width:var(--action-size);height:var(--action-size);padding:0;border:1px solid var(--line);border-radius:50%;background:var(--white);color:var(--blue);cursor:pointer}.event-actions svg{width:18px;height:18px}.event-edit[aria-pressed="true"]{background:var(--blue);color:white;border-color:var(--blue)}.event-edit:hover{box-shadow:0 3px 10px rgba(24,48,66,.1)}@media(pointer:coarse){.event-body{--action-size:44px}}
 .event [data-edit-id]{white-space:pre-wrap}
 .event [contenteditable="plaintext-only"]{outline:1px dashed var(--blue);outline-offset:3px;border-radius:4px;min-height:1.5em;background:#f4fafc}
-.event-delete{color:#aa3e32;border-color:#e4b8b2}@media print{.event-actions{display:none}.event [contenteditable]{outline:none;background:none}}
+.event-delete{color:var(--muted)}.event-delete:hover{color:#aa3e32;border-color:#e4b8b2;background:#fff0ed}@media print{.event-body{grid-template-columns:minmax(0,1fr)}.event-actions{display:none}.event [contenteditable]{outline:none;background:none}}
 .countdown{margin-top:24px;padding:20px 22px;border:1px solid #ffffff45;border-radius:16px;background:#ffffff14;max-width:760px}
 .countdown-label{font-size:13px;color:#cbe5ee}.countdown h2{font-size:18px;line-height:1.5;margin:5px 0;color:#fff}
 .countdown-value{font-size:clamp(28px,6vw,40px);font-weight:750;line-height:1.3;font-variant-numeric:tabular-nums;margin:10px 0}
@@ -118,6 +118,25 @@ const saveEndpoint = 'https://travel-plan-state.estella2012-travel.workers.dev/s
 const notices = document.getElementById('notices-section');
 const groups = document.querySelectorAll('.notices, .timeline');
 let state = {};
+function actionIcon(kind) {
+  const paths = {
+    edit: 'm16 3 5 5-12 12-6 1 1-6Z M14 5l5 5',
+    done: 'm5 12 4 4L19 6',
+    remove: 'M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7'
+  };
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.8');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', paths[kind]);
+  svg.append(path);
+  return svg;
+}
 function renderEvents() {
   const tags = {time: 'div', arrival: 'div', title: 'h3', text: 'p', route: 'div', pill: 'span'};
   state.events.forEach(item => {
@@ -263,12 +282,16 @@ async function loadState() {
       const edit = document.createElement('button');
       edit.type = 'button';
       edit.className = 'event-edit';
-      edit.textContent = '编辑';
+      edit.append(actionIcon('edit'));
+      edit.setAttribute('aria-label', '编辑安排');
+      edit.title = '编辑安排';
       edit.setAttribute('aria-pressed', 'false');
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'event-delete';
-      remove.textContent = '删除';
+      remove.append(actionIcon('remove'));
+      remove.setAttribute('aria-label', '删除安排');
+      remove.title = '删除安排';
       remove.hidden = true;
       remove.addEventListener('click', async () => {
         remove.disabled = true;
@@ -283,7 +306,9 @@ async function loadState() {
       edit.addEventListener('click', () => {
         const editing = edit.getAttribute('aria-pressed') !== 'true';
         edit.setAttribute('aria-pressed', String(editing));
-        edit.textContent = editing ? '完成' : '编辑';
+        edit.replaceChildren(actionIcon(editing ? 'done' : 'edit'));
+        edit.setAttribute('aria-label', editing ? '完成编辑' : '编辑安排');
+        edit.title = editing ? '完成编辑' : '编辑安排';
         remove.hidden = !editing;
         fields.forEach(field => {
           if (field.matches('.time, .arrival-time')) return;
@@ -300,7 +325,11 @@ async function loadState() {
       const actions = document.createElement('div');
       actions.className = 'event-actions';
       actions.append(edit, remove);
-      event.querySelector('.event-card').prepend(actions);
+      const card = event.querySelector('.event-card');
+      const body = document.createElement('div');
+      body.className = 'event-body';
+      card.before(body);
+      body.append(card, actions);
     });
     document.querySelectorAll('details[data-state-id]').forEach(panel => {
       const id = panel.dataset.stateId;
