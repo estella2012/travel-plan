@@ -447,7 +447,7 @@ async function saveState(next = state) {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error);
     state = next;
-    feedback.textContent = '已保存，其他人刷新网页后可看到。';
+    feedback.textContent = '已保存';
     return true;
   } catch (error) {
     feedback.textContent = `保存失败，变更尚未同步。${error.message}`;
