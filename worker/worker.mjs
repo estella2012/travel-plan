@@ -31,8 +31,10 @@ export default {
     if (!state || typeof state !== 'object' || Array.isArray(state) ||
         !Object.entries(state).every(([id, value]) =>
           ((dayIds.has(id) || noticeIds.has(id)) && (value === 'open' || value === 'closed')) ||
-          (noticeIds.has(id) && value === 'removed'))) {
-      return reply({error: '只接受当前行程的展开、收起和提醒隐藏状态'}, 400);
+          (noticeIds.has(id) && value === 'removed') ||
+          (id === 'edits' && value && typeof value === 'object' && !Array.isArray(value) &&
+            Object.values(value).every(text => typeof text === 'string')))) {
+      return reply({error: '只接受行程文字、展开、收起和提醒隐藏状态'}, 400);
     }
     if (!env.GITHUB_TOKEN) return reply({error: '请在 Worker 中配置 GITHUB_TOKEN Secret'}, 503);
 
@@ -50,7 +52,7 @@ export default {
         headers: {...headers, 'Content-Type': 'application/json'},
         body: JSON.stringify({
           message: 'Update shared itinerary view state',
-          content: btoa(JSON.stringify(state, null, 2) + '\n'),
+          content: btoa(Array.from(new TextEncoder().encode(JSON.stringify(state, null, 2) + '\n'), byte => String.fromCharCode(byte)).join('')),
           sha: file.sha,
           branch: 'main'
         })
