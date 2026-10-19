@@ -29,10 +29,6 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline
 
 .save-button:disabled{opacity:.65;cursor:wait}
 .save-feedback{position:fixed;right:18px;bottom:calc(80px + env(safe-area-inset-bottom));max-width:min(360px,calc(100vw - 36px));padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:white;box-shadow:var(--shadow);font-size:14px}
-.save-dialog{width:min(420px,calc(100% - 32px));padding:24px;border:1px solid var(--line);border-radius:18px;color:var(--ink);box-shadow:var(--shadow)}
-.save-dialog::backdrop{background:#16253380}.save-dialog h2{margin:0 0 12px;font-size:22px}.save-dialog p{font-size:14px;color:var(--muted)}
-.save-dialog label{display:block;margin-top:18px;font-weight:650}.save-dialog input{width:100%;margin-top:7px;padding:11px 12px;border:1px solid #9badb8;border-radius:9px;font:inherit}
-.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.dialog-actions button{padding:9px 16px;border:1px solid var(--line);border-radius:9px;background:white;cursor:pointer}.dialog-actions .primary{background:#143e52;color:white;border-color:#143e52}
 </style>
 </head>
 <body id="top">
@@ -90,27 +86,16 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline
 </main>
 <button class="save-button" id="save-button" type="button" disabled>保存</button>
 <div class="save-feedback" id="save-feedback" role="status" aria-live="polite">正在读取共享状态…</div>
-<dialog class="save-dialog" id="save-dialog" aria-labelledby="save-title">
-<form id="save-form">
-<h2 id="save-title">保存到 GitHub</h2>
-<p>保存后，其他人刷新网页也会看到这些展开、收起和隐藏状态。</p>
-<label for="github-token">GitHub 访问令牌</label>
-<input id="github-token" type="password" required autocomplete="off" spellcheck="false" autofocus aria-describedby="token-help">
-<p id="token-help">使用仅授权 travel-plan 仓库、Contents 允许读写的细粒度令牌。仅用于本次保存，不存入网页或浏览器。</p>
-<div class="dialog-actions"><button id="cancel-save" type="button">取消</button><button class="primary" type="submit">保存到 GitHub</button></div>
-</form>
-</dialog>
+
 
 <script>
 const endpoint = 'https://api.github.com/repos/estella2012/travel-plan/contents/state.json';
 const saveButton = document.getElementById('save-button');
 const feedback = document.getElementById('save-feedback');
-const dialog = document.getElementById('save-dialog');
-const tokenInput = document.getElementById('github-token');
+const saveEndpoint = 'https://travel-plan-state.estella2012-travel.workers.dev/state';
 const notices = document.getElementById('notices-section');
 const groups = document.querySelectorAll('.notices, .timeline');
 let state = {};
-let sha;
 function updateNotices() {
   notices.hidden = !notices.querySelector('details');
 }
@@ -121,7 +106,6 @@ async function loadState() {
     if (!response.ok) throw new Error(`GitHub 返回 ${response.status}`);
     const file = await response.json();
     state = JSON.parse(atob(file.content));
-    sha = file.sha;
     document.querySelectorAll('details[data-state-id]').forEach(panel => {
       const id = panel.dataset.stateId;
       if (state[id] === 'removed') { panel.remove(); return; }
@@ -157,36 +141,19 @@ async function loadState() {
     feedback.textContent = `读取共享状态失败，请刷新重试。${error.message}`;
   }
 }
-saveButton.addEventListener('click', () => dialog.showModal());
-dialog.addEventListener('close', () => tokenInput.value = '');
-document.getElementById('cancel-save').addEventListener('click', () => dialog.close());
-document.getElementById('save-form').addEventListener('submit', async event => {
-  event.preventDefault();
-  const token = tokenInput.value.trim();
-  tokenInput.value = '';
-  dialog.close();
+saveButton.addEventListener('click', async () => {
   saveButton.disabled = true;
   saveButton.textContent = '保存中…';
   feedback.hidden = false;
   feedback.textContent = '正在保存到 GitHub…';
   try {
-    const response = await fetch(endpoint, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: 'Update shared itinerary view state',
-        content: btoa(JSON.stringify(state, null, 2) + '\n'),
-        sha,
-        branch: 'main'
-      })
+    const response = await fetch(saveEndpoint, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(state)
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(`GitHub ${response.status}: ${result.message}`);
-    sha = result.content.sha;
+    if (!response.ok) throw new Error(result.error);
     feedback.textContent = '已保存，其他人刷新网页后可看到。';
   } catch (error) {
     feedback.textContent = `保存失败，变更尚未同步。${error.message}`;
