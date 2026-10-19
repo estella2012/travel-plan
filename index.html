@@ -27,6 +27,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline
 .day:not([open])>.day-summary{margin-bottom:0}
 @media print{.notice-close,.chevron,.day-summary-meta{display:none}.day-summary{background:none;padding-left:0}}
 
+.save-feedback.is-saved{animation:feedback-out .35s ease 5s forwards}@keyframes feedback-out{to{opacity:0;visibility:hidden}}
 .save-button:disabled{opacity:.65;cursor:wait}
 .save-feedback{position:fixed;right:18px;bottom:calc(80px + env(safe-area-inset-bottom));max-width:min(360px,calc(100vw - 36px));padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:white;box-shadow:var(--shadow);font-size:14px}
 .event-body{--action-size:38px;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) var(--action-size);gap:10px;align-items:start}.event-actions{display:flex;flex-direction:column;gap:8px}.event-edit,.event-delete{display:grid;place-items:center;width:var(--action-size);height:var(--action-size);padding:0;border:1px solid var(--line);border-radius:50%;background:var(--white);color:var(--blue);cursor:pointer}.event-actions svg{width:18px;height:18px}.event-edit[aria-pressed="true"]{background:var(--blue);color:white;border-color:var(--blue)}.event-edit:hover{box-shadow:0 3px 10px rgba(24,48,66,.1)}@media(pointer:coarse){.event-body{--action-size:44px}}
@@ -230,7 +231,8 @@ async function loadState() {
       event.querySelector('.event-card').append(tagList);
       let editingTags = false;
       function tagsChanged() {
-        feedback.hidden = false;
+        feedback.classList.remove('is-saved');
+          feedback.hidden = false;
         feedback.textContent = '有未保存的修改，点击“保存”同步。';
       }
       function renderTags() {
@@ -296,6 +298,7 @@ async function loadState() {
         field.addEventListener('input', () => {
           record.text = field.innerText;
           updateCountdown();
+          feedback.classList.remove('is-saved');
           feedback.hidden = false;
           feedback.textContent = '有未保存的修改，点击“保存”同步。';
         });
@@ -332,6 +335,7 @@ async function loadState() {
           time.textContent = value;
           item.fields.find(field => field.id === time.dataset.editId).text = value;
           updateCountdown();
+          feedback.classList.remove('is-saved');
           feedback.hidden = false;
           feedback.textContent = '有未保存的修改，点击“保存”同步。';
         });
@@ -436,7 +440,8 @@ async function loadState() {
 async function saveState(next = state) {
   saveButton.disabled = true;
   saveButton.textContent = '保存中…';
-  feedback.hidden = false;
+  feedback.classList.remove('is-saved');
+          feedback.hidden = false;
   feedback.textContent = '正在保存到 GitHub…';
   try {
     const response = await fetch(saveEndpoint, {
@@ -448,6 +453,7 @@ async function saveState(next = state) {
     if (!response.ok) throw new Error(result.error);
     state = next;
     feedback.textContent = '已保存';
+    feedback.classList.add('is-saved');
     return true;
   } catch (error) {
     feedback.textContent = `保存失败，变更尚未同步。${error.message}`;
