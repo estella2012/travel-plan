@@ -1,13 +1,13 @@
-# 行程共享保存
+# 旅行计划共享数据
 
 网页：https://estella2012.github.io/travel-plan/
 
-保存接口：`POST https://travel-plan-state.estella2012-travel.workers.dev/state`
+接口：`POST https://travel-plan-state.estella2012-travel.workers.dev/state`
 
-每项安排的“编辑”按钮可修改时间、标题、说明、路线和标签。“完成”结束编辑；右下角“保存”将文字与折叠、提醒隐藏状态一起写入 `estella2012/travel-plan` 的 `main/state.json`。其他人刷新后读取这些内容。
+`main/state.json` 是卡片记录的唯一数据源。`events` 数组保存卡片 ID、日期、时区和文字字段；日期/提醒 ID 保存展开、收起和提醒隐藏状态。网页从这些记录生成卡片，不再保留固定卡片或 edits 覆盖层。
 
-文字保存在 `edits` 对象中，以 HTML 的 `data-edit-id` 对应字段。日期和提醒状态仍以各自 ID 保存。请求是完整状态；最后成功写入的版本生效。GitHub 写入冲突返回 409，不自动重试。
+编辑时间和文字后，点击右下角“保存”。编辑模式的“删除”会立即提交不含该记录的完整状态；保存成功后移除卡片。没有卡片回收站或删除标记。
 
-Worker 的 `GITHUB_TOKEN` 绑定需要该仓库的 Contents 读写权限。令牌不进入网页。接口允许所有访客保存，没有登录或访问口令。
+每次保存完整覆盖共享数据；最后成功写入的版本生效。GitHub 写入冲突返回 409，不自动重试。Worker 的 GITHUB_TOKEN 绑定需要该仓库 Contents 读写权限；令牌不进入网页。所有访客均可编辑和保存。
 
 本地验证：`node --test worker.test.mjs`。

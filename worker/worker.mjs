@@ -4,6 +4,15 @@ const dayIds = new Set([
   '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29',
   '2026-11-07', '2026-11-08'
 ]);
+const fieldKinds = new Set(['time', 'arrival', 'title', 'text', 'route', 'pill']);
+function validEvents(events) {
+  return Array.isArray(events) && events.every(event =>
+    event && typeof event.id === 'string' && dayIds.has(event.date) &&
+    Array.isArray(event.fields) && event.fields.every(field =>
+      field && typeof field.id === 'string' && fieldKinds.has(field.kind) && typeof field.text === 'string') &&
+    event.fields.some(field => field.kind === 'time') &&
+    event.fields.some(field => field.kind === 'title'));
+}
 const noticeIds = new Set(['notice-jiuzhai-stay', 'notice-chengdu-airport']);
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -28,13 +37,12 @@ export default {
     } catch {
       return reply({error: '请求必须是 JSON'}, 400);
     }
-    if (!state || typeof state !== 'object' || Array.isArray(state) ||
+    if (!state || typeof state !== 'object' || Array.isArray(state) || !validEvents(state.events) ||
         !Object.entries(state).every(([id, value]) =>
           ((dayIds.has(id) || noticeIds.has(id)) && (value === 'open' || value === 'closed')) ||
           (noticeIds.has(id) && value === 'removed') ||
-          (id === 'edits' && value && typeof value === 'object' && !Array.isArray(value) &&
-            Object.values(value).every(text => typeof text === 'string')))) {
-      return reply({error: '只接受行程文字、展开、收起和提醒隐藏状态'}, 400);
+          (id === 'events' && validEvents(value)))) {
+      return reply({error: '行程数据格式不正确，请刷新网页后重试'}, 400);
     }
     if (!env.GITHUB_TOKEN) return reply({error: '请在 Worker 中配置 GITHUB_TOKEN Secret'}, 503);
 
@@ -51,7 +59,7 @@ export default {
         method: 'PUT',
         headers: {...headers, 'Content-Type': 'application/json'},
         body: JSON.stringify({
-          message: 'Update shared itinerary view state',
+          message: 'Update shared itinerary',
           content: btoa(Array.from(new TextEncoder().encode(JSON.stringify(state, null, 2) + '\n'), byte => String.fromCharCode(byte)).join('')),
           sha: file.sha,
           branch: 'main'

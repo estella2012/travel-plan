@@ -3,7 +3,12 @@ import assert from 'node:assert/strict';
 import worker from './worker.mjs';
 
 const env = {GITHUB_TOKEN: 'test-token-not-a-real-credential'};
-const state = {'2026-10-22': 'closed', 'notice-jiuzhai-stay': 'removed', edits: {'2026-10-22/0/1': '上海 → 成都 ✈️\n已确认'}};
+const state = {'2026-10-22': 'closed', 'notice-jiuzhai-stay': 'removed', events: [{
+  id: '2026-10-22/0', date: '2026-10-22', fields: [
+    {id: '2026-10-22/0/0', kind: 'time', text: '13:10'},
+    {id: '2026-10-22/0/1', kind: 'title', text: '上海 → 成都 ✈️\n已确认'}
+  ]
+}]};
 const post = body => new Request('https://example.test/state', {
   method: 'POST', body: JSON.stringify(body), headers: {'Content-Type': 'application/json'}
 });
@@ -60,4 +65,18 @@ test('GitHub conflict is reported without retrying', async t => {
   const response = await worker.fetch(post(state), env);
   assert.equal(response.status, 409);
   assert.equal(calls, 2);
+});
+
+test('deletion stores no record or deletion marker for the removed card', async t => {
+  let written;
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (options.method !== 'PUT') return Response.json({sha: 'current-sha'});
+    written = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(JSON.parse(options.body).content), char => char.charCodeAt(0))));
+    return Response.json({});
+  });
+  const response = await worker.fetch(post({...state, events: []}), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual(written.events, []);
+  assert.ok(!JSON.stringify(written).includes('上海'));
+  assert.ok(!JSON.stringify(written).includes('2026-10-22/0'));
 });
