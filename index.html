@@ -31,6 +31,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline
 .save-feedback{position:fixed;right:18px;bottom:calc(80px + env(safe-area-inset-bottom));max-width:min(360px,calc(100vw - 36px));padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:white;box-shadow:var(--shadow);font-size:14px}
 .event-body{--action-size:38px;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) var(--action-size);gap:10px;align-items:start}.event-actions{display:flex;flex-direction:column;gap:8px}.event-edit,.event-delete{display:grid;place-items:center;width:var(--action-size);height:var(--action-size);padding:0;border:1px solid var(--line);border-radius:50%;background:var(--white);color:var(--blue);cursor:pointer}.event-actions svg{width:18px;height:18px}.event-edit[aria-pressed="true"]{background:var(--blue);color:white;border-color:var(--blue)}.event-edit:hover{box-shadow:0 3px 10px rgba(24,48,66,.1)}@media(pointer:coarse){.event-body{--action-size:44px}}
 .event [data-edit-id]{white-space:pre-wrap}
+.event-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.event-tag{display:inline-flex;align-items:center;gap:5px;max-width:100%;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:650;background:#ffebc2;color:#815313}.event-tag:nth-child(5n+2){background:#deedf9;color:#285b86}.event-tag:nth-child(5n+3){background:#e9e2f8;color:#624491}.event-tag:nth-child(5n+4){background:#dff2e7;color:#286342}.event-tag:nth-child(5n+5){background:#fbe1e8;color:#943e5c}.tag-text{min-width:1em;overflow-wrap:anywhere;white-space:pre-wrap}.tag-text[contenteditable]{outline:1px dashed currentColor;outline-offset:2px;border-radius:3px}.tag-remove{border:0;background:none;color:inherit;font-size:18px;line-height:1;padding:2px;cursor:pointer}.tag-add{border:1px dashed #9ebbc6;border-radius:999px;padding:3px 10px;background:none;color:var(--blue);font-size:12px;cursor:pointer}
 .event [contenteditable="plaintext-only"]{outline:1px dashed var(--blue);outline-offset:3px;border-radius:4px;min-height:1.5em;background:#f4fafc}
 .event-delete{color:var(--muted)}.event-delete:hover{color:#aa3e32;border-color:#e4b8b2;background:#fff0ed}@media print{.event-body{grid-template-columns:minmax(0,1fr)}.event-actions{display:none}.event [contenteditable]{outline:none;background:none}}
 .countdown{margin-top:24px;padding:20px 22px;border:1px solid #ffffff45;border-radius:16px;background:#ffffff14;max-width:760px}
@@ -138,7 +139,7 @@ function actionIcon(kind) {
   return svg;
 }
 function renderEvents() {
-  const tags = {time: 'div', arrival: 'div', title: 'h3', text: 'p', route: 'div', pill: 'span'};
+  const tags = {time: 'div', arrival: 'div', title: 'h3', text: 'p', route: 'div'};
   state.events.forEach(item => {
     const event = document.createElement('article');
     event.className = 'event';
@@ -149,6 +150,7 @@ function renderEvents() {
     card.className = 'event-card';
     event.append(card);
     item.fields.forEach(field => {
+      if (field.kind === 'pill') return;
       const element = document.createElement(tags[field.kind]);
       element.dataset.editId = field.id;
       element.textContent = field.text;
@@ -163,7 +165,6 @@ function renderEvents() {
         event.append(node);
       } else {
         if (field.kind === 'route') element.className = 'route';
-        if (field.kind === 'pill') element.className = `pill ${field.tone}`;
         card.append(element);
       }
     });
@@ -224,6 +225,66 @@ async function loadState() {
     renderEvents();
     document.querySelectorAll('.event').forEach(event => {
       const item = state.events.find(item => item.id === event.dataset.eventId);
+      const tagList = document.createElement('div');
+      tagList.className = 'event-tags';
+      event.querySelector('.event-card').append(tagList);
+      let editingTags = false;
+      function tagsChanged() {
+        feedback.hidden = false;
+        feedback.textContent = '有未保存的修改，点击“保存”同步。';
+      }
+      function renderTags() {
+        tagList.replaceChildren();
+        const tags = item.fields.filter(field => field.kind === 'pill' && (editingTags || field.text.trim()));
+        tagList.hidden = !editingTags && tags.length === 0;
+        tags.forEach(tag => {
+          const chip = document.createElement('span');
+          chip.className = 'event-tag';
+          const text = document.createElement('span');
+          text.className = 'tag-text';
+          text.textContent = tag.text;
+          if (editingTags) {
+            text.contentEditable = 'plaintext-only';
+            text.setAttribute('aria-label', '标签名称');
+            text.addEventListener('input', () => {
+              tag.text = text.innerText;
+              tagsChanged();
+            });
+            text.addEventListener('keydown', e => {
+              if (e.key === 'Enter') { e.preventDefault(); text.blur(); }
+            });
+          }
+          chip.append(text);
+          if (editingTags) {
+            const removeTag = document.createElement('button');
+            removeTag.type = 'button';
+            removeTag.className = 'tag-remove';
+            removeTag.textContent = '×';
+            removeTag.setAttribute('aria-label', `删除标签：${tag.text}`);
+            removeTag.addEventListener('click', () => {
+              item.fields = item.fields.filter(field => field.id !== tag.id);
+              tagsChanged();
+              renderTags();
+            });
+            chip.append(removeTag);
+          }
+          tagList.append(chip);
+        });
+        if (editingTags) {
+          const addTag = document.createElement('button');
+          addTag.type = 'button';
+          addTag.className = 'tag-add';
+          addTag.textContent = '+ 标签';
+          addTag.addEventListener('click', () => {
+            item.fields.push({id: `${item.id}/tag-${crypto.randomUUID()}`, kind: 'pill', text: ''});
+            tagsChanged();
+            renderTags();
+            tagList.querySelector('.event-tag:last-of-type .tag-text').focus();
+          });
+          tagList.append(addTag);
+        }
+      }
+      renderTags();
       const fields = event.querySelectorAll('[data-edit-id]');
       fields.forEach(field => {
         const id = field.dataset.editId;
@@ -310,6 +371,9 @@ async function loadState() {
         edit.setAttribute('aria-label', editing ? '完成编辑' : '编辑安排');
         edit.title = editing ? '完成编辑' : '编辑安排';
         remove.hidden = !editing;
+        editingTags = editing;
+        if (!editing) item.fields = item.fields.filter(field => field.kind !== 'pill' || field.text.trim());
+        renderTags();
         fields.forEach(field => {
           if (field.matches('.time, .arrival-time')) return;
           if (editing) field.setAttribute('contenteditable', 'plaintext-only');
