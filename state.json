@@ -1,4 +1,14 @@
 {
-  "notice-jiuzhai-stay": "closed",
-  "notice-chengdu-airport": "closed"
+  "notice-jiuzhai-stay": "removed",
+  "notice-chengdu-airport": "open",
+  "2026-10-22": "closed",
+  "2026-10-23": "closed",
+  "2026-10-24": "closed",
+  "2026-10-25": "closed",
+  "2026-10-26": "closed",
+  "2026-10-27": "closed",
+  "2026-10-28": "closed",
+  "2026-10-29": "closed",
+  "2026-11-07": "closed",
+  "2026-11-08": "closed"
 }
