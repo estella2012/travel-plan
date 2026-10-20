@@ -388,7 +388,6 @@ async function loadState() {
           input.hidden = !editing;
           if (arrival) arrival.hidden = !editing && !time.textContent;
         });
-        if (editing) timeEditors[0].hour.focus();
       });
       const actions = document.createElement('div');
       actions.className = 'event-actions';
