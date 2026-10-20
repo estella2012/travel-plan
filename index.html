@@ -206,8 +206,20 @@ function renderEvents() {
       feedback.textContent = '有未保存的修改，点击“保存”同步。';
     });
     day.querySelector('.events').append(add);
+    sortDayEvents(day);
   });
   updateDayCounts();
+}
+function sortDayEvents(day) {
+  const list = day.querySelector('.events');
+  const add = list.querySelector('.add-event');
+  const timeValue = event => {
+    const clock = clockOnly(event.querySelector('.time').textContent);
+    return clock ? Number(clock.replace(':', '')) : Infinity;
+  };
+  Array.from(list.querySelectorAll('.event'))
+    .sort((a, b) => timeValue(a) - timeValue(b))
+    .forEach(event => list.insertBefore(event, add));
 }
 function bindEvent(event) {
   const item = state.events.find(item => item.id === event.dataset.eventId);
@@ -318,6 +330,7 @@ function bindEvent(event) {
     input.addEventListener('change', () => {
       const value = hour.value && minute.value ? `${hour.value}:${minute.value}` : '';
       time.textContent = value;
+      if (time.classList.contains('time')) sortDayEvents(event.closest('.day'));
       item.fields.find(field => field.id === time.dataset.editId).text = value;
       updateCountdown();
       feedback.classList.remove('is-saved');
