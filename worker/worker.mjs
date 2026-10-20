@@ -2,6 +2,8 @@ const fileUrl = 'https://api.github.com/repos/estella2012/travel-plan/contents/s
 const dayIds = new Set([
   '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25',
   '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29',
+  '2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02',
+  '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06',
   '2026-11-07', '2026-11-08'
 ]);
 const fieldKinds = new Set(['time', 'arrival', 'title', 'text', 'route', 'pill', 'image']);
@@ -103,4 +105,5 @@ export default {
     }
   }
 };
+
 
