@@ -204,6 +204,13 @@ async function encodePhoto(file) {
   bitmap.close();
   return canvas.toDataURL('image/webp', .85).split(',')[1];
 }
+function removeEmptyParagraphs(item, event) {
+  const empty = item.fields.filter(field => ['text', 'route'].includes(field.kind) && !field.text.trim());
+  item.fields = item.fields.filter(field => !empty.includes(field));
+  event.querySelectorAll('[data-edit-id]').forEach(element => {
+    if (empty.some(field => field.id === element.dataset.editId)) element.remove();
+  });
+}
 function renderEvent(item) {
   const tags = {time: 'div', arrival: 'div', title: 'h3', text: 'p', route: 'div'};
     const event = document.createElement('article');
@@ -220,6 +227,7 @@ function renderEvent(item) {
       const element = document.createElement(tags[field.kind]);
       element.dataset.editId = field.id;
       element.textContent = field.text;
+      element.hidden = ['text', 'route'].includes(field.kind) && !field.text.trim();
       if (field.kind === 'time') {
         element.className = 'time';
         event.prepend(element);
@@ -349,8 +357,7 @@ function bindEvent(event) {
     }
   }
   renderTags();
-  const fields = event.querySelectorAll('[data-edit-id]');
-  fields.forEach(field => {
+  event.querySelectorAll('[data-edit-id]').forEach(field => {
     const id = field.dataset.editId;
     const record = item.fields.find(field => field.id === id);
     if (field.matches('.time, .arrival-time')) {
@@ -482,8 +489,10 @@ function bindEvent(event) {
     editingTags = editing;
     if (!editing) item.fields = item.fields.filter(field => field.kind !== 'pill' || field.text.trim());
     renderTags();
-    fields.forEach(field => {
+    if (!editing) removeEmptyParagraphs(item, event);
+    event.querySelectorAll('[data-edit-id]').forEach(field => {
       if (field.matches('.time, .arrival-time')) return;
+      field.hidden = false;
       if (editing) field.setAttribute('contenteditable', 'plaintext-only');
       else field.removeAttribute('contenteditable');
     });
@@ -592,6 +601,10 @@ async function loadState() {
   }
 }
 async function saveState(next = state) {
+  document.querySelectorAll('.event').forEach(event => {
+    const item = next.events.find(item => item.id === event.dataset.eventId);
+    if (item) removeEmptyParagraphs(item, event);
+  });
   saveButton.disabled = true;
   saveButton.textContent = '保存中…';
   feedback.classList.remove('is-saved');
