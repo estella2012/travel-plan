@@ -132,6 +132,77 @@
       "id": "2026-10-24/1"
     },
     {
+      "id": "2026-10-24/airport-to-waldorf",
+      "date": "2026-10-24",
+      "utcOffset": "+08:00",
+      "clockLabel": "中国时间",
+      "fields": [
+        {
+          "id": "2026-10-24/airport-to-waldorf/time",
+          "kind": "time",
+          "text": "11:30"
+        },
+        {
+          "id": "2026-10-24/airport-to-waldorf/title",
+          "kind": "title",
+          "text": "天府机场 T2 → 成都华尔道夫酒店"
+        },
+        {
+          "id": "2026-10-24/airport-to-waldorf/text",
+          "kind": "text",
+          "text": "按打车 / 网约车估算：10:30 落地后预留约 1 小时下机、取行李及候车，11:30 出发；车程约 60–75 分钟，预计 12:30–12:45 到店，先寄存行李。酒店官网标注距天府机场约 50 公里；车程为规划估算，非实时路况。"
+        },
+        {
+          "id": "2026-10-24/airport-to-waldorf/tag",
+          "kind": "pill",
+          "text": "时间预估"
+        }
+      ]
+    },
+    {
+      "date": "2026-10-24",
+      "fields": [
+        {
+          "id": "2026-10-24/2/0",
+          "kind": "time",
+          "text": "15:00"
+        },
+        {
+          "id": "2026-10-24/2/1",
+          "kind": "title",
+          "text": "成都华尔道夫酒店"
+        },
+        {
+          "id": "2026-10-24/2/2",
+          "kind": "text",
+          "text": "已订 1 晚。"
+        },
+        {
+          "id": "2026-10-24/2/address",
+          "kind": "text",
+          "text": "地址：成都市高新区天府大道北段 1199 号。"
+        },
+        {
+          "id": "2026-10-24/2/check-in-plan",
+          "kind": "text",
+          "text": "按酒店官网标准入住时间安排 15:00 check-in。预计 12:30–12:45 抵达酒店，先寄存行李、午餐；如酒店提前有房，可现场询问提前入住。"
+        },
+        {
+          "id": "2026-10-24/2/source",
+          "kind": "text",
+          "text": "酒店官网：https://www.hilton.com.cn/zh-CN/CTUWAWA/"
+        },
+        {
+          "id": "2026-10-24/2/tag",
+          "kind": "pill",
+          "text": "已订 1 晚"
+        }
+      ],
+      "id": "2026-10-24/2",
+      "utcOffset": "+08:00",
+      "clockLabel": "中国时间"
+    },
+    {
       "date": "2026-10-25",
       "fields": [
         {
