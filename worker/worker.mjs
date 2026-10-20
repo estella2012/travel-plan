@@ -4,7 +4,7 @@ const dayIds = new Set([
   '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29',
   '2026-11-07', '2026-11-08'
 ]);
-const fieldKinds = new Set(['time', 'arrival', 'title', 'text', 'route', 'pill']);
+const fieldKinds = new Set(['time', 'arrival', 'title', 'text', 'route', 'pill', 'image']);
 function validEvents(events) {
   return Array.isArray(events) && events.every(event =>
     event && typeof event.id === 'string' && dayIds.has(event.date) &&
@@ -27,7 +27,8 @@ function reply(body, status = 200) {
 
 export default {
   async fetch(request, env) {
-    if (new URL(request.url).pathname !== '/state') return reply({error: 'Not found'}, 404);
+    const path = new URL(request.url).pathname;
+    if (path !== '/state' && path !== '/images') return reply({error: 'Not found'}, 404);
     if (request.method === 'OPTIONS') return new Response(null, {status: 204, headers: cors});
     if (request.method !== 'POST') return reply({error: 'Use POST'}, 405);
 
@@ -36,6 +37,32 @@ export default {
       state = await request.json();
     } catch {
       return reply({error: '请求必须是 JSON'}, 400);
+    }
+    if (path === '/images') {
+      if (!state || typeof state.content !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(state.content)) {
+        return reply({error: '图片数据格式不正确'}, 400);
+      }
+      if (!env.GITHUB_TOKEN) return reply({error: '请在 Worker 中配置 GITHUB_TOKEN Secret'}, 503);
+      const imagePath = `images/${crypto.randomUUID()}.webp`;
+      try {
+        const saved = await fetch(`https://api.github.com/repos/estella2012/travel-plan/contents/${imagePath}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${env.GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github+json',
+            'User-Agent': 'travel-plan-state',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({message: 'Upload itinerary image', content: state.content, branch: 'main'})
+        });
+        if (!saved.ok) {
+          const error = await saved.json();
+          return reply({error: `上传图片失败（${saved.status}）：${error.message}`}, 502);
+        }
+        return reply({url: `https://raw.githubusercontent.com/estella2012/travel-plan/main/${imagePath}`});
+      } catch {
+        return reply({error: '连接 GitHub 失败，请稍后重试'}, 502);
+      }
     }
     if (!state || typeof state !== 'object' || Array.isArray(state) || !validEvents(state.events) ||
         !Object.entries(state).every(([id, value]) =>
@@ -76,3 +103,4 @@ export default {
     }
   }
 };
+

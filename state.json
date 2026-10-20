@@ -122,6 +122,11 @@
           "id": "2026-10-24/1/arrival",
           "kind": "arrival",
           "text": "10:30"
+        },
+        {
+          "id": "2026-10-24/1/attachment-cz5151-2026-10-24.jpg",
+          "kind": "image",
+          "text": "images/cz5151-2026-10-24.jpg"
         }
       ],
       "id": "2026-10-24/1"
@@ -196,6 +201,11 @@
           "id": "2026-10-26/0/arrival",
           "kind": "arrival",
           "text": "09:31"
+        },
+        {
+          "id": "2026-10-26/0/attachment-c5772-2026-10-26.jpg",
+          "kind": "image",
+          "text": "images/c5772-2026-10-26.jpg"
         }
       ],
       "id": "2026-10-26/0"
@@ -222,6 +232,11 @@
           "id": "2026-10-26/1/3",
           "kind": "route",
           "text": "路线示意：诺日朗中心站附近 → 老虎海、树正群海、火花海、双龙海、芦苇海、盆景滩方向"
+        },
+        {
+          "id": "2026-10-26/1/attachment-jiuzhaigou-route-map.jpg",
+          "kind": "image",
+          "text": "images/jiuzhaigou-route-map.jpg"
         }
       ],
       "id": "2026-10-26/1"
@@ -248,6 +263,11 @@
           "id": "2026-10-26/2/tag-1f9ccb4c-18dd-4a7a-8979-57a766eab9ac",
           "kind": "pill",
           "text": "联系司机回民宿"
+        },
+        {
+          "id": "2026-10-26/2/attachment-jiuzhaigou-lodging-instructions.jpg",
+          "kind": "image",
+          "text": "images/jiuzhaigou-lodging-instructions.jpg"
         }
       ],
       "id": "2026-10-26/2"
@@ -269,6 +289,11 @@
           "id": "2026-10-27/0/2",
           "kind": "text",
           "text": "按你的地图计划，游览红线之外的左线、右线。需确保这一天也有有效预约 / 入园资格；官方旺季运营时间为 08:00–18:00，最迟入园 14:00。"
+        },
+        {
+          "id": "2026-10-27/0/attachment-jiuzhaigou-route-map.jpg",
+          "kind": "image",
+          "text": "images/jiuzhaigou-route-map.jpg"
         }
       ],
       "id": "2026-10-27/0"
@@ -337,6 +362,11 @@
           "id": "2026-10-28/1/arrival",
           "kind": "arrival",
           "text": "17:42"
+        },
+        {
+          "id": "2026-10-28/1/attachment-c5804-2026-10-28.jpg",
+          "kind": "image",
+          "text": "images/c5804-2026-10-28.jpg"
         }
       ],
       "id": "2026-10-28/1"
@@ -363,6 +393,16 @@
           "id": "2026-10-28/2/arrival",
           "kind": "arrival",
           "text": "22:55"
+        },
+        {
+          "id": "2026-10-28/2/attachment-ca8562-old-ticket-2026-10-28.jpg",
+          "kind": "image",
+          "text": "images/ca8562-old-ticket-2026-10-28.jpg"
+        },
+        {
+          "id": "2026-10-28/2/old-ticket-note",
+          "kind": "text",
+          "text": "附图为原 CA8562 机票截图；当前航班安排以本卡的 MU9184 信息为准。"
         }
       ],
       "id": "2026-10-28/2"
