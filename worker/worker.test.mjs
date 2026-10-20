@@ -123,3 +123,15 @@ test('saved cards retain image links without embedding image bytes in itinerary 
   assert.equal(response.status,200);
   assert.deepEqual(JSON.parse(Buffer.from(saved.content,'base64').toString('utf8')),withImage);
 });
+
+
+test('newly added dates support disclosure state and newly created itinerary cards',async t=>{
+  const dates=['2026-10-30','2026-10-31','2026-11-01','2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06'];
+  t.mock.method(globalThis,'fetch',async(url,options)=>Response.json(options.method==='PUT'?{}:{sha:'current-sha'}));
+  for(const date of dates){
+    const next=structuredClone(state);
+    next[date]='closed';
+    next.events.push({id:date+'/task',date,fields:[{id:date+'/time',kind:'time',text:''},{id:date+'/title',kind:'title',text:'新安排'}]});
+    assert.equal((await worker.fetch(post(next),env)).status,200,date);
+  }
+});
