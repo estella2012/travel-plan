@@ -400,14 +400,14 @@
           "text": "22:55"
         },
         {
-          "id": "2026-10-28/2/attachment-ca8562-old-ticket-2026-10-28.jpg",
-          "kind": "image",
-          "text": "images/ca8562-old-ticket-2026-10-28.jpg"
-        },
-        {
           "id": "2026-10-28/2/old-ticket-note",
           "kind": "text",
           "text": "附图为原 CA8562 机票截图；当前航班安排以本卡的 MU9184 信息为准。"
+        },
+        {
+          "id": "2026-10-28/2/image-1792469256670",
+          "kind": "image",
+          "text": "https://raw.githubusercontent.com/estella2012/travel-plan/main/images/82b45f25-fad1-4ff4-9695-8cb70ab7479f.webp"
         }
       ],
       "id": "2026-10-28/2"
