@@ -46,6 +46,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline
 .arrival-time{font-size:14px;line-height:1.7;text-align:right;color:var(--blue);font-weight:750;letter-spacing:.02em}
 .arrival-node .time-editor{margin-top:0}
 @media(max-width:760px){.arrival-time{font-size:12px}}
+.add-event{margin-left:calc(var(--time-width) + var(--axis-gap));margin-right:48px;min-height:38px;border:1px dashed #b7cbd5;border-radius:12px;background:#ffffff80;color:var(--blue);font-size:25px;line-height:1;cursor:pointer}.add-event:hover{background:#e8f3f6;border-color:var(--blue)}@media(pointer:coarse){.add-event{margin-right:54px}}@media print{.add-event{display:none}}
 </style>
 </head>
 <body id="top">
@@ -139,9 +140,8 @@ function actionIcon(kind) {
   svg.append(path);
   return svg;
 }
-function renderEvents() {
+function renderEvent(item) {
   const tags = {time: 'div', arrival: 'div', title: 'h3', text: 'p', route: 'div'};
-  state.events.forEach(item => {
     const event = document.createElement('article');
     event.className = 'event';
     event.dataset.eventId = item.id;
@@ -169,9 +169,219 @@ function renderEvents() {
         card.append(element);
       }
     });
-    document.querySelector(`[data-state-id="${item.date}"] .events`).append(event);
+    const list = document.querySelector(`[data-state-id="${item.date}"] .events`);
+    list.insertBefore(event, list.querySelector('.add-event'));
+    return event;
+}
+function renderEvents() {
+  state.events.forEach(item => bindEvent(renderEvent(item)));
+  document.querySelectorAll('.day').forEach(day => {
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'add-event';
+    add.textContent = '+';
+    add.setAttribute('aria-label', `${day.dataset.stateId} 添加安排`);
+    add.addEventListener('click', () => {
+      const date = day.dataset.stateId;
+      const id = `${date}/task-${Date.now()}`;
+      const sameDay = state.events.find(item => item.date === date);
+      const item = {
+        id, date,
+        utcOffset: sameDay?.utcOffset || '+08:00',
+        clockLabel: sameDay?.clockLabel || '中国时间',
+        fields: [
+          {id: `${id}/time`, kind: 'time', text: ''},
+          {id: `${id}/title`, kind: 'title', text: '新安排'},
+          {id: `${id}/text`, kind: 'text', text: ''},
+          {id: `${id}/arrival`, kind: 'arrival', text: ''}
+        ]
+      };
+      state.events.push(item);
+      const event = renderEvent(item);
+      bindEvent(event);
+      event.querySelector('.event-edit').click();
+      updateDayCounts();
+      feedback.classList.remove('is-saved');
+      feedback.hidden = false;
+      feedback.textContent = '有未保存的修改，点击“保存”同步。';
+    });
+    day.querySelector('.events').append(add);
   });
   updateDayCounts();
+}
+function bindEvent(event) {
+  const item = state.events.find(item => item.id === event.dataset.eventId);
+  const tagList = document.createElement('div');
+  tagList.className = 'event-tags';
+  event.querySelector('.event-card').append(tagList);
+  let editingTags = false;
+  function tagsChanged() {
+    feedback.classList.remove('is-saved');
+      feedback.hidden = false;
+    feedback.textContent = '有未保存的修改，点击“保存”同步。';
+  }
+  function renderTags() {
+    tagList.replaceChildren();
+    const tags = item.fields.filter(field => field.kind === 'pill' && (editingTags || field.text.trim()));
+    tagList.hidden = !editingTags && tags.length === 0;
+    tags.forEach(tag => {
+      const chip = document.createElement('span');
+      chip.className = 'event-tag';
+      const text = document.createElement('span');
+      text.className = 'tag-text';
+      text.textContent = tag.text;
+      if (editingTags) {
+        text.contentEditable = 'plaintext-only';
+        text.setAttribute('aria-label', '标签名称');
+        text.addEventListener('input', () => {
+          tag.text = text.innerText;
+          tagsChanged();
+        });
+        text.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); text.blur(); }
+        });
+      }
+      chip.append(text);
+      if (editingTags) {
+        const removeTag = document.createElement('button');
+        removeTag.type = 'button';
+        removeTag.className = 'tag-remove';
+        removeTag.textContent = '×';
+        removeTag.setAttribute('aria-label', `删除标签：${tag.text}`);
+        removeTag.addEventListener('click', () => {
+          item.fields = item.fields.filter(field => field.id !== tag.id);
+          tagsChanged();
+          renderTags();
+        });
+        chip.append(removeTag);
+      }
+      tagList.append(chip);
+    });
+    if (editingTags) {
+      const addTag = document.createElement('button');
+      addTag.type = 'button';
+      addTag.className = 'tag-add';
+      addTag.textContent = '+ 标签';
+      addTag.addEventListener('click', () => {
+        item.fields.push({id: `${item.id}/tag-${crypto.randomUUID()}`, kind: 'pill', text: ''});
+        tagsChanged();
+        renderTags();
+        tagList.querySelector('.event-tag:last-of-type .tag-text').focus();
+      });
+      tagList.append(addTag);
+    }
+  }
+  renderTags();
+  const fields = event.querySelectorAll('[data-edit-id]');
+  fields.forEach(field => {
+    const id = field.dataset.editId;
+    const record = item.fields.find(field => field.id === id);
+    if (field.matches('.time, .arrival-time')) {
+      field.textContent = clockOnly(field.textContent);
+      return;
+    }
+    field.addEventListener('input', () => {
+      record.text = field.innerText;
+      updateCountdown();
+      feedback.classList.remove('is-saved');
+      feedback.hidden = false;
+      feedback.textContent = '有未保存的修改，点击“保存”同步。';
+    });
+  });
+  const timeEditors = Array.from(event.querySelectorAll('.time, .arrival-time'), time => {
+    const timeSlot = document.createElement('div');
+    timeSlot.className = 'time-slot';
+    time.before(timeSlot);
+    timeSlot.append(time);
+    const input = document.createElement('div');
+    input.className = 'time-editor';
+    const label = time.classList.contains('arrival-time') ? '到达' : '出发';
+    const [hourValue = '', minuteValue = ''] = time.textContent.split(':');
+    function select(values, value, name) {
+      const control = document.createElement('select');
+      control.setAttribute('aria-label', `${label}${name}`);
+      control.add(new Option('—', ''));
+      values.forEach(number => {
+        const text = String(number).padStart(2, '0');
+        control.add(new Option(text, text));
+      });
+      control.value = value;
+      return control;
+    }
+    const hour = select(Array.from({length: 24}, (_, i) => i), hourValue, '小时');
+    const minutes = Array.from({length: 12}, (_, i) => i * 5);
+    if (minuteValue && !minutes.includes(Number(minuteValue))) minutes.push(Number(minuteValue));
+    minutes.sort((a, b) => a - b);
+    const minute = select(minutes, minuteValue, '分钟');
+    input.append(hour, document.createTextNode(':'), minute);
+    input.hidden = true;
+    input.addEventListener('change', () => {
+      const value = hour.value && minute.value ? `${hour.value}:${minute.value}` : '';
+      time.textContent = value;
+      item.fields.find(field => field.id === time.dataset.editId).text = value;
+      updateCountdown();
+      feedback.classList.remove('is-saved');
+      feedback.hidden = false;
+      feedback.textContent = '有未保存的修改，点击“保存”同步。';
+    });
+    timeSlot.append(input);
+    const arrival = time.closest('.arrival-node');
+    if (arrival) arrival.hidden = !time.textContent;
+    return {time, input, arrival, hour};
+  });
+  const edit = document.createElement('button');
+  edit.type = 'button';
+  edit.className = 'event-edit';
+  edit.append(actionIcon('edit'));
+  edit.setAttribute('aria-label', '编辑安排');
+  edit.title = '编辑安排';
+  edit.setAttribute('aria-pressed', 'false');
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.className = 'event-delete';
+  remove.append(actionIcon('remove'));
+  remove.setAttribute('aria-label', '删除安排');
+  remove.title = '删除安排';
+  remove.hidden = true;
+  remove.addEventListener('click', async () => {
+    remove.disabled = true;
+    const next = {...state, events: state.events.filter(record => record.id !== item.id)};
+    if (await saveState(next)) {
+      event.remove();
+      updateDayCounts();
+      updateCountdown();
+      feedback.textContent = '已删除，其他人刷新网页后可看到。';
+    } else remove.disabled = false;
+  });
+  edit.addEventListener('click', () => {
+    const editing = edit.getAttribute('aria-pressed') !== 'true';
+    edit.setAttribute('aria-pressed', String(editing));
+    edit.replaceChildren(actionIcon(editing ? 'done' : 'edit'));
+    edit.setAttribute('aria-label', editing ? '完成编辑' : '编辑安排');
+    edit.title = editing ? '完成编辑' : '编辑安排';
+    remove.hidden = !editing;
+    editingTags = editing;
+    if (!editing) item.fields = item.fields.filter(field => field.kind !== 'pill' || field.text.trim());
+    renderTags();
+    fields.forEach(field => {
+      if (field.matches('.time, .arrival-time')) return;
+      if (editing) field.setAttribute('contenteditable', 'plaintext-only');
+      else field.removeAttribute('contenteditable');
+    });
+    timeEditors.forEach(({time, input, arrival}) => {
+      time.hidden = editing;
+      input.hidden = !editing;
+      if (arrival) arrival.hidden = !editing && !time.textContent;
+    });
+  });
+  const actions = document.createElement('div');
+  actions.className = 'event-actions';
+  actions.append(edit, remove);
+  const card = event.querySelector('.event-card');
+  const body = document.createElement('div');
+  body.className = 'event-body';
+  card.before(body);
+  body.append(card, actions);
 }
 function updateDayCounts() {
   document.querySelectorAll('.day').forEach(day => {
@@ -224,180 +434,6 @@ async function loadState() {
     const file = await response.json();
     state = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(file.content), char => char.charCodeAt(0))));
     renderEvents();
-    document.querySelectorAll('.event').forEach(event => {
-      const item = state.events.find(item => item.id === event.dataset.eventId);
-      const tagList = document.createElement('div');
-      tagList.className = 'event-tags';
-      event.querySelector('.event-card').append(tagList);
-      let editingTags = false;
-      function tagsChanged() {
-        feedback.classList.remove('is-saved');
-          feedback.hidden = false;
-        feedback.textContent = '有未保存的修改，点击“保存”同步。';
-      }
-      function renderTags() {
-        tagList.replaceChildren();
-        const tags = item.fields.filter(field => field.kind === 'pill' && (editingTags || field.text.trim()));
-        tagList.hidden = !editingTags && tags.length === 0;
-        tags.forEach(tag => {
-          const chip = document.createElement('span');
-          chip.className = 'event-tag';
-          const text = document.createElement('span');
-          text.className = 'tag-text';
-          text.textContent = tag.text;
-          if (editingTags) {
-            text.contentEditable = 'plaintext-only';
-            text.setAttribute('aria-label', '标签名称');
-            text.addEventListener('input', () => {
-              tag.text = text.innerText;
-              tagsChanged();
-            });
-            text.addEventListener('keydown', e => {
-              if (e.key === 'Enter') { e.preventDefault(); text.blur(); }
-            });
-          }
-          chip.append(text);
-          if (editingTags) {
-            const removeTag = document.createElement('button');
-            removeTag.type = 'button';
-            removeTag.className = 'tag-remove';
-            removeTag.textContent = '×';
-            removeTag.setAttribute('aria-label', `删除标签：${tag.text}`);
-            removeTag.addEventListener('click', () => {
-              item.fields = item.fields.filter(field => field.id !== tag.id);
-              tagsChanged();
-              renderTags();
-            });
-            chip.append(removeTag);
-          }
-          tagList.append(chip);
-        });
-        if (editingTags) {
-          const addTag = document.createElement('button');
-          addTag.type = 'button';
-          addTag.className = 'tag-add';
-          addTag.textContent = '+ 标签';
-          addTag.addEventListener('click', () => {
-            item.fields.push({id: `${item.id}/tag-${crypto.randomUUID()}`, kind: 'pill', text: ''});
-            tagsChanged();
-            renderTags();
-            tagList.querySelector('.event-tag:last-of-type .tag-text').focus();
-          });
-          tagList.append(addTag);
-        }
-      }
-      renderTags();
-      const fields = event.querySelectorAll('[data-edit-id]');
-      fields.forEach(field => {
-        const id = field.dataset.editId;
-        const record = item.fields.find(field => field.id === id);
-        if (field.matches('.time, .arrival-time')) {
-          field.textContent = clockOnly(field.textContent);
-          return;
-        }
-        field.addEventListener('input', () => {
-          record.text = field.innerText;
-          updateCountdown();
-          feedback.classList.remove('is-saved');
-          feedback.hidden = false;
-          feedback.textContent = '有未保存的修改，点击“保存”同步。';
-        });
-      });
-      const timeEditors = Array.from(event.querySelectorAll('.time, .arrival-time'), time => {
-        const timeSlot = document.createElement('div');
-        timeSlot.className = 'time-slot';
-        time.before(timeSlot);
-        timeSlot.append(time);
-        const input = document.createElement('div');
-        input.className = 'time-editor';
-        const label = time.classList.contains('arrival-time') ? '到达' : '出发';
-        const [hourValue = '', minuteValue = ''] = time.textContent.split(':');
-        function select(values, value, name) {
-          const control = document.createElement('select');
-          control.setAttribute('aria-label', `${label}${name}`);
-          control.add(new Option('—', ''));
-          values.forEach(number => {
-            const text = String(number).padStart(2, '0');
-            control.add(new Option(text, text));
-          });
-          control.value = value;
-          return control;
-        }
-        const hour = select(Array.from({length: 24}, (_, i) => i), hourValue, '小时');
-        const minutes = Array.from({length: 12}, (_, i) => i * 5);
-        if (minuteValue && !minutes.includes(Number(minuteValue))) minutes.push(Number(minuteValue));
-        minutes.sort((a, b) => a - b);
-        const minute = select(minutes, minuteValue, '分钟');
-        input.append(hour, document.createTextNode(':'), minute);
-        input.hidden = true;
-        input.addEventListener('change', () => {
-          const value = hour.value && minute.value ? `${hour.value}:${minute.value}` : '';
-          time.textContent = value;
-          item.fields.find(field => field.id === time.dataset.editId).text = value;
-          updateCountdown();
-          feedback.classList.remove('is-saved');
-          feedback.hidden = false;
-          feedback.textContent = '有未保存的修改，点击“保存”同步。';
-        });
-        timeSlot.append(input);
-        const arrival = time.closest('.arrival-node');
-        if (arrival) arrival.hidden = !time.textContent;
-        return {time, input, arrival, hour};
-      });
-      const edit = document.createElement('button');
-      edit.type = 'button';
-      edit.className = 'event-edit';
-      edit.append(actionIcon('edit'));
-      edit.setAttribute('aria-label', '编辑安排');
-      edit.title = '编辑安排';
-      edit.setAttribute('aria-pressed', 'false');
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'event-delete';
-      remove.append(actionIcon('remove'));
-      remove.setAttribute('aria-label', '删除安排');
-      remove.title = '删除安排';
-      remove.hidden = true;
-      remove.addEventListener('click', async () => {
-        remove.disabled = true;
-        const next = {...state, events: state.events.filter(record => record.id !== item.id)};
-        if (await saveState(next)) {
-          event.remove();
-          updateDayCounts();
-          updateCountdown();
-          feedback.textContent = '已删除，其他人刷新网页后可看到。';
-        } else remove.disabled = false;
-      });
-      edit.addEventListener('click', () => {
-        const editing = edit.getAttribute('aria-pressed') !== 'true';
-        edit.setAttribute('aria-pressed', String(editing));
-        edit.replaceChildren(actionIcon(editing ? 'done' : 'edit'));
-        edit.setAttribute('aria-label', editing ? '完成编辑' : '编辑安排');
-        edit.title = editing ? '完成编辑' : '编辑安排';
-        remove.hidden = !editing;
-        editingTags = editing;
-        if (!editing) item.fields = item.fields.filter(field => field.kind !== 'pill' || field.text.trim());
-        renderTags();
-        fields.forEach(field => {
-          if (field.matches('.time, .arrival-time')) return;
-          if (editing) field.setAttribute('contenteditable', 'plaintext-only');
-          else field.removeAttribute('contenteditable');
-        });
-        timeEditors.forEach(({time, input, arrival}) => {
-          time.hidden = editing;
-          input.hidden = !editing;
-          if (arrival) arrival.hidden = !editing && !time.textContent;
-        });
-      });
-      const actions = document.createElement('div');
-      actions.className = 'event-actions';
-      actions.append(edit, remove);
-      const card = event.querySelector('.event-card');
-      const body = document.createElement('div');
-      body.className = 'event-body';
-      card.before(body);
-      body.append(card, actions);
-    });
     document.querySelectorAll('details[data-state-id]').forEach(panel => {
       const id = panel.dataset.stateId;
       if (state[id] === 'removed') { panel.remove(); return; }
@@ -467,3 +503,4 @@ loadState();
 </script>
 </body>
 </html>
+
