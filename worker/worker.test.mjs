@@ -80,3 +80,46 @@ test('deletion stores no record or deletion marker for the removed card', async 
   assert.ok(!JSON.stringify(written).includes('上海'));
   assert.ok(!JSON.stringify(written).includes('2026-10-22/0'));
 });
+
+
+test('image upload stores a separate file in the fixed repository and returns its raw URL', async t => {
+  const calls=[];
+  t.mock.method(globalThis,'fetch', async (url, options) => {
+    calls.push({url,options});
+    return Response.json({commit:{sha:'uploaded'}});
+  });
+  const response=await worker.fetch(new Request('https://example.test/images',{
+    method:'POST', body:JSON.stringify({content:'UklGRg=='})
+  }),env);
+  assert.equal(response.status,200);
+  assert.equal(calls.length,1);
+  assert.match(calls[0].url,/^https:\/\/api\.github\.com\/repos\/estella2012\/travel-plan\/contents\/images\/[\da-f-]+\.webp$/);
+  assert.deepEqual(JSON.parse(calls[0].options.body),{message:'Upload itinerary image',content:'UklGRg==',branch:'main'});
+  const result=await response.json();
+  assert.equal(result.url,calls[0].url.replace('https://api.github.com/repos/','https://raw.githubusercontent.com/').replace('/contents/','/main/'));
+});
+
+test('invalid images do not write to GitHub and failed uploads report errors', async t => {
+  const mocked=t.mock.method(globalThis,'fetch',async()=>Response.json({message:'No access'},{status:403}));
+  for(const body of [{}, {content:''}, {content:'not base64!'}]) {
+    const response=await worker.fetch(new Request('https://example.test/images',{method:'POST',body:JSON.stringify(body)}),env);
+    assert.equal(response.status,400);
+  }
+  assert.equal(mocked.mock.callCount(),0);
+  const failed=await worker.fetch(new Request('https://example.test/images',{method:'POST',body:JSON.stringify({content:'UklGRg=='})}),env);
+  assert.equal(failed.status,502);
+  assert.match((await failed.json()).error,/403/);
+});
+
+test('saved cards retain image links without embedding image bytes in itinerary data', async t => {
+  const withImage=structuredClone(state);
+  withImage.events[0].fields.push({id:'2026-10-22/0/image',kind:'image',text:'https://raw.githubusercontent.com/estella2012/travel-plan/main/images/example.webp'});
+  let saved;
+  t.mock.method(globalThis,'fetch',async (url,options)=>{
+    if(options.method==='PUT') { saved=JSON.parse(options.body); return Response.json({}); }
+    return Response.json({sha:'current-sha'});
+  });
+  const response=await worker.fetch(post(withImage),env);
+  assert.equal(response.status,200);
+  assert.deepEqual(JSON.parse(Buffer.from(saved.content,'base64').toString('utf8')),withImage);
+});
