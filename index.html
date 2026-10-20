@@ -47,7 +47,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline
 .arrival-node .time-editor{margin-top:0}
 @media(max-width:760px){.arrival-time{font-size:12px}}
 .add-event{margin-left:calc(var(--time-width) + var(--axis-gap));margin-right:48px;min-height:38px;border:1px dashed #b7cbd5;border-radius:12px;background:#ffffff80;color:var(--blue);font-size:25px;line-height:1;cursor:pointer}.add-event:hover{background:#e8f3f6;border-color:var(--blue)}@media(pointer:coarse){.add-event{margin-right:54px}}@media print{.add-event{display:none}}
-.event-upload:disabled{opacity:.5;cursor:wait}.event-photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.photo-preview{display:block;width:76px;height:76px;padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#edf2f5;cursor:zoom-in}.photo-preview img{display:block;width:100%;height:100%;object-fit:cover}.image-viewer{inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:56px 16px 20px;border:0;background:#101820f5}.image-viewer[open]{display:flex;align-items:center;justify-content:center}.image-viewer img{display:block;max-width:100%;max-height:100%;object-fit:contain}.image-close{position:absolute;top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));width:40px;height:40px;border:1px solid #ffffff55;border-radius:50%;background:#ffffff18;color:white;font-size:28px;line-height:1;cursor:pointer}body:has(.image-viewer[open]){overflow:hidden}@media print{.image-viewer{display:none}}
+.event-upload:disabled{opacity:.5;cursor:wait}.event-photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.photo-item{position:relative}.photo-delete{display:none;position:absolute;right:-6px;top:-6px;place-items:center;width:24px;height:24px;padding:0;border:1px solid #dfb3ac;border-radius:50%;background:#fff;color:#a44034;font-size:20px;line-height:1;cursor:pointer}.event.is-editing .photo-delete{display:grid}@media(pointer:coarse){.photo-delete{width:28px;height:28px}}.photo-preview{display:block;width:76px;height:76px;padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#edf2f5;cursor:zoom-in}.photo-preview img{display:block;width:100%;height:100%;object-fit:cover}.image-viewer{inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:56px 16px 20px;border:0;background:#101820f5}.image-viewer[open]{display:flex;align-items:center;justify-content:center}.image-viewer img{display:block;max-width:100%;max-height:100%;object-fit:contain}.image-close{position:absolute;top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));width:40px;height:40px;border:1px solid #ffffff55;border-radius:50%;background:#ffffff18;color:white;font-size:28px;line-height:1;cursor:pointer}body:has(.image-viewer[open]){overflow:hidden}@media print{.image-viewer{display:none}}
 </style>
 </head>
 <body id="top">
@@ -166,7 +166,25 @@ function appendPhoto(card, field) {
     viewerImage.src = photo.src;
     imageViewer.showModal();
   });
-  gallery.append(button);
+  const item = document.createElement('div');
+  item.className = 'photo-item';
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.className = 'photo-delete';
+  remove.textContent = '×';
+  remove.setAttribute('aria-label', '删除图片');
+  remove.addEventListener('click', () => {
+    const event = card.closest('.event');
+    const record = state.events.find(record => record.id === event.dataset.eventId);
+    record.fields = record.fields.filter(record => record.id !== field.id);
+    item.remove();
+    if (!gallery.children.length) gallery.remove();
+    feedback.classList.remove('is-saved');
+    feedback.hidden = false;
+    feedback.textContent = '图片已移除，点击“保存”同步。';
+  });
+  item.append(button, remove);
+  gallery.append(item);
 }
 async function encodePhoto(file) {
   const bitmap = await createImageBitmap(file);
@@ -450,6 +468,7 @@ function bindEvent(event) {
     edit.replaceChildren(actionIcon(editing ? 'done' : 'edit'));
     edit.setAttribute('aria-label', editing ? '完成编辑' : '编辑安排');
     edit.title = editing ? '完成编辑' : '编辑安排';
+    event.classList.toggle('is-editing', editing);
     remove.hidden = !editing;
     upload.hidden = !editing;
     editingTags = editing;
