@@ -203,6 +203,44 @@
       "clockLabel": "中国时间"
     },
     {
+      "id": "2026-10-25/sanxingdui",
+      "date": "2026-10-25",
+      "utcOffset": "+08:00",
+      "clockLabel": "中国时间",
+      "fields": [
+        {
+          "id": "2026-10-25/sanxingdui/time",
+          "kind": "time",
+          "text": "08:30"
+        },
+        {
+          "id": "2026-10-25/sanxingdui/arrival",
+          "kind": "arrival",
+          "text": ""
+        },
+        {
+          "id": "2026-10-25/sanxingdui/title",
+          "kind": "title",
+          "text": "三星堆博物馆"
+        },
+        {
+          "id": "2026-10-25/sanxingdui/text",
+          "kind": "text",
+          "text": "已预约普通票 3 张，使用日期：2026 年 10 月 25 日，预约入馆时段 08:30–12:00。须凭购票证件原件检票进馆。具体到馆时间及参观结束时间待定。"
+        },
+        {
+          "id": "2026-10-25/sanxingdui/tag",
+          "kind": "pill",
+          "text": "已预约"
+        },
+        {
+          "id": "2026-10-25/sanxingdui/quantity",
+          "kind": "pill",
+          "text": "3 人"
+        }
+      ]
+    },
+    {
       "date": "2026-10-25",
       "fields": [
         {
