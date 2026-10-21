@@ -212,6 +212,9 @@ function removeEmptyParagraphs(item, event) {
   });
 }
 function renderEvent(item) {
+  if (!item.fields.some(field => field.kind === 'arrival')) {
+    item.fields.push({id: `${item.id}/arrival`, kind: 'arrival', text: ''});
+  }
   const tags = {time: 'div', arrival: 'div', title: 'h3', text: 'p', route: 'div'};
     const event = document.createElement('article');
     event.className = 'event';
