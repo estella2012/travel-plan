@@ -96,6 +96,11 @@
           "id": "2026-10-24/0/tag-e0272e7c-9205-4235-9f7c-b4a0af5894a6",
           "kind": "pill",
           "text": "紧张"
+        },
+        {
+          "id": "2026-10-24/0/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ],
       "id": "2026-10-24/0"
@@ -156,6 +161,11 @@
           "id": "2026-10-24/airport-to-waldorf/tag",
           "kind": "pill",
           "text": "时间预估"
+        },
+        {
+          "id": "2026-10-24/airport-to-waldorf/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ]
     },
@@ -183,19 +193,14 @@
           "text": "地址：成都市高新区天府大道北段 1199 号。"
         },
         {
-          "id": "2026-10-24/2/check-in-plan",
-          "kind": "text",
-          "text": "\n"
-        },
-        {
-          "id": "2026-10-24/2/source",
-          "kind": "text",
-          "text": "\n"
-        },
-        {
           "id": "2026-10-24/2/tag",
           "kind": "pill",
           "text": "已订 1 晚"
+        },
+        {
+          "id": "2026-10-24/2/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ],
       "id": "2026-10-24/2",
@@ -237,6 +242,11 @@
           "id": "2026-10-25/sanxingdui/quantity",
           "kind": "pill",
           "text": "3 人"
+        },
+        {
+          "id": "2026-10-25/sanxingdui/image-1792629736397",
+          "kind": "image",
+          "text": "https://raw.githubusercontent.com/estella2012/travel-plan/main/images/d0f2b81a-5457-40b0-ab8b-59cab0e6aed5.webp"
         }
       ]
     },
@@ -262,6 +272,11 @@
           "id": "2026-10-25/0/tag-c0214b1a-a674-4aa4-b5bc-92ef42925469",
           "kind": "pill",
           "text": "大床房"
+        },
+        {
+          "id": "2026-10-25/0/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ],
       "id": "2026-10-25/0"
@@ -324,6 +339,11 @@
           "id": "2026-10-26/1/attachment-jiuzhaigou-route-map.jpg",
           "kind": "image",
           "text": "images/jiuzhaigou-route-map.jpg"
+        },
+        {
+          "id": "2026-10-26/1/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ],
       "id": "2026-10-26/1"
@@ -355,6 +375,11 @@
           "id": "2026-10-26/2/attachment-jiuzhaigou-lodging-instructions.jpg",
           "kind": "image",
           "text": "images/jiuzhaigou-lodging-instructions.jpg"
+        },
+        {
+          "id": "2026-10-26/2/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ],
       "id": "2026-10-26/2"
@@ -381,6 +406,11 @@
           "id": "2026-10-27/0/attachment-jiuzhaigou-route-map.jpg",
           "kind": "image",
           "text": "images/jiuzhaigou-route-map.jpg"
+        },
+        {
+          "id": "2026-10-27/0/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ],
       "id": "2026-10-27/0"
@@ -402,6 +432,11 @@
           "id": "2026-10-27/1/2",
           "kind": "text",
           "text": "早餐约 08:00–09:00；晚餐自费火锅约 16:00–20:00。截图提醒高海拔慢走、避免洗澡；回民宿按店家指定路线，在诺日朗中心站下车。"
+        },
+        {
+          "id": "2026-10-27/1/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ],
       "id": "2026-10-27/1"
@@ -428,6 +463,11 @@
           "id": "2026-10-28/0/tag-cb953603-038f-4637-bb86-aaf52b8a8ca2",
           "kind": "pill",
           "text": "包车"
+        },
+        {
+          "id": "2026-10-28/0/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ],
       "id": "2026-10-28/0"
@@ -516,6 +556,11 @@
           "id": "2026-10-29/0/2",
           "kind": "text",
           "text": "目前没有收到这几天的安排。"
+        },
+        {
+          "id": "2026-10-29/0/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ],
       "id": "2026-10-29/0"
@@ -566,6 +611,11 @@
           "id": "2026-11-07/1/2",
           "kind": "text",
           "text": "预计出站后从交通中心乘普通列车直达弘大入口站，车程约58分钟；成人交通卡 ₩5,250（单程），一次性交通卡另加 ₩100，另有可退 ₩500 押金。若入境或出站延误，改乘后续班次。"
+        },
+        {
+          "id": "2026-11-07/1/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ]
     },
@@ -589,6 +639,11 @@
           "id": "2026-11-07/2/2",
           "kind": "text",
           "text": "在弘大入口站周边用餐；按抵达时间和当晚营业情况选店。"
+        },
+        {
+          "id": "2026-11-07/2/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ]
     },
@@ -612,6 +667,11 @@
           "id": "2026-11-07/3/2",
           "kind": "text",
           "text": "安排服饰、美妆或文创购物；店铺营业时间各异，先购物再留时间吃夜宵。"
+        },
+        {
+          "id": "2026-11-07/3/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ]
     },
@@ -635,6 +695,11 @@
           "id": "2026-11-07/4/2",
           "kind": "text",
           "text": "继续在弘大用餐、休息；凌晨仍营业的店以当晚营业信息为准。准备乘车前，提前到弘大入口站的 N6002 机场巴士站。"
+        },
+        {
+          "id": "2026-11-07/4/arrival",
+          "kind": "arrival",
+          "text": ""
         }
       ]
     },
